@@ -1,6 +1,15 @@
 
 ;******* GLOCAL VARIABLES *********
-globals[ human-list police-list low-region medium-region high-region region-boundaries ]
+globals[ human-list
+  police-list
+  low-region
+  medium-region
+  high-region
+  region-boundaries
+  low-region-list
+  medium-region-list
+  high-region-list
+]
 
 
 ;*******BREEDS OF TURTLES******
@@ -18,9 +27,9 @@ patches-own[ region ]
 
 to setup
   clear-all
-  set low-region patches with [pxcor >= 22 and pxcor <= 32]
+  set low-region patches with [pxcor > 21 and pxcor <= 32]
   ask low-region [ set pcolor yellow ]
-  set medium-region patches with [pxcor >= 12 and pxcor <= 20]
+  set medium-region patches with [pxcor >= 12 and pxcor < 21]
   ask medium-region [ set pcolor green ]
   set high-region patches with [pxcor >= 1 and pxcor <= 10]
   ask high-region [ set pcolor red ]
@@ -47,24 +56,50 @@ to mainlist
   ask polices[
     set police-list (list count polices)
   ]
+  ask low-region[
+    set low-region-list ( list count humans with [ wealth < 50])
+  ]
+  ask medium-region[
+    set medium-region-list ( list count humans with [ (wealth > 50) and (wealth < 80) ])
+  ]
+  ask high-region[
+    set high-region-list ( list count humans with [ wealth >= 80 ])
+  ]
   print human-list
   print police-list
 
 end
 
 to setup-humans
-
   create-humans (initial-number / 2)[
     set shape "person"
     set color blue
     ;setxy random-xcor random-ycor
     set wealth wealth + random 100
+    if wealth >= 80[
+      move-to one-of high-region with [count turtles-here = 0]
+    ]
+    if wealth  < 80 [
+      move-to one-of medium-region with [count turtles-here = 0]
+    ]
+    if wealth < 50 [
+      move-to one-of low-region with [count turtles-here = 0]
+    ]
   ]
   create-humans (initial-number / 2)[
     set shape "person"
     set color pink
-    setxy random-xcor random-ycor
+    ;setxy random-xcor random-ycor
     set wealth wealth + random 100
+    if wealth >= 80[
+      move-to one-of high-region with [count turtles-here = 0]
+    ]
+    if wealth  < 80 [
+      move-to one-of medium-region with [count turtles-here = 0]
+    ]
+    if wealth < 50 [
+      move-to one-of low-region with [count turtles-here = 0]
+    ]
   ]
 end
 
@@ -77,24 +112,27 @@ end
 
 to move-humans
   ask humans[
-    if wealth >= 80[
-      move-to one-of high-region with [count turtles-here = 0]
-    ]
-    if wealth  < 80 [
-      move-to one-of medium-region with [count turtles-here = 0]
-    ]
-    ifelse wealth < 50 [
-      move-to one-of low-region with [count turtles-here = 0]
+    ifelse wealth >= 80 and (pcolor != red) [
+      move-to one-of high-region with [ count turtles-here = 0 ]
     ][
-      left random 45
-      right random 45
-      forward 1
-      set wealth wealth - 1
-  ]
+      ifelse (wealth < 80) and (wealth >= 50) and (pcolor != green) [
+        move-to one-of medium-region with [count turtles-here = 0]
+      ][
+        ifelse wealth < 50 and (pcolor != yellow) [
+        move-to one-of low-region with [count turtles-here = 0]
+        ][
+           left random 45
+           right random 45
+           forward 1
+           set wealth wealth - 1
+        ]
+      ]
+    ]
     show-wealth
   ]
-
 end
+
+
 
 to move-polices
   ask polices[
@@ -191,8 +229,8 @@ GRAPHICS-WINDOW
 32
 0
 32
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -206,7 +244,7 @@ initial-number
 initial-number
 2
 100
-20.0
+84.0
 2
 1
 NIL
